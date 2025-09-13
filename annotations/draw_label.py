@@ -1,10 +1,12 @@
 from nicegui import ui
-from get_point import GetPoint
+from annotations.get_point import GetPoint
 
 # -----------------------
 # Clase para dibujar figuras sobre una imagen
+# unicamente encargada de la parte visual
+# la obtención de puntos se delega a GetPoint
 # -----------------------
-class ShapeDrawer:
+class LabelDrawer:
     def __init__(self, image_url: str, width: int, height: int, getpoint: GetPoint):
         """
         Inicializa el dibujador de figuras.
@@ -14,7 +16,7 @@ class ShapeDrawer:
         - width, height: dimensiones de la imagen y el área de dibujo.
         - getpoint: instancia de la clase GetPoint para registrar clics del usuario.
         """
-        self.image_url = image_url
+        self._image_url = image_url
         self.width = width
         self.height = height
         self.mode = "bbox"  # modo de dibujo por defecto ("bbox" o "polygon")
@@ -27,6 +29,22 @@ class ShapeDrawer:
         # Asociamos el evento "click" a la función handle_click de GetPoint
         # De esta forma, cada clic del usuario sobre la imagen se guarda como un punto.
         self.html.on('click', self.getpoint.handle_click)
+        
+    def load_image(self, image_url: str):
+        """
+        Cambia la imagen de fondo a una nueva URL si es válida.
+        Acepta .png, .jpg y .jpeg
+        """
+        if not isinstance(image_url, str):
+            raise ValueError("La URL de la imagen debe ser un string.")
+
+        # Normalizamos en minúsculas y verificamos la extensión
+        if image_url.lower().endswith(('.png', '.jpg', '.jpeg')):
+            self._image_url = image_url
+        else:
+            raise ValueError("La URL de la imagen no tiene una extensión válida (.png, .jpg, .jpeg).")
+
+        
 
     def _template(self):
         """
@@ -36,7 +54,7 @@ class ShapeDrawer:
         """
         return f"""
         <div style="position: relative; display: inline-block;">
-          <img id="bg" src="{self.image_url}" 
+          <img id="bg" src="{self._image_url}" 
                width="{self.width}" height="{self.height}" 
                style="display: block; cursor: crosshair;">
           <svg id="overlay" width="{self.width}" height="{self.height}"
@@ -81,7 +99,6 @@ class ShapeDrawer:
             # Código JavaScript para crear un rectángulo en el SVG
             js = f"""
                 const svg = document.getElementById("overlay");
-               
                 // Si ya existe un rect con id 'edited', lo borramos (reemplazo de edición)
                 const old = document.getElementById("edited");
                 if (old) svg.removeChild(old);
@@ -152,11 +169,13 @@ class ShapeDrawer:
 
             js = f"""
             const svg = document.getElementById("overlay");
+            const old = document.getElementById("poly-{points_str}");
+            if (old) svg.removeChild(old);
             const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
             poly.setAttribute("points", "{points_str}");
             poly.setAttribute("stroke", "red");
             poly.setAttribute("stroke-width", "2");
-            poly.setAttribute("fill", "rgba(255,0,0,0.3)");
+            poly.setAttribute("fill", "rgba(255,165,0,0.001)");
             svg.appendChild(poly);
             """
             ui.run_javascript(js)
@@ -170,27 +189,63 @@ class ShapeDrawer:
 
             js = f"""
             const svg = document.getElementById("overlay");
-
             // Eliminamos el polígono de edición previo
-            const old = document.getElementById("editing-poly");
+            const old = document.getElementById("edited");
             if (old) svg.removeChild(old);
 
             const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-            poly.setAttribute("id", "editing-poly");
+            poly.setAttribute("id", "edited");
             poly.setAttribute("points", "{points_str}");
             poly.setAttribute("stroke", "orange");                // color distinto para edición
             poly.setAttribute("stroke-width", "2");
-            poly.setAttribute("fill", "rgba(255,165,0,0.3)");     // naranja semitransparente
+            poly.setAttribute("fill", "rgba(255,165,0,0.1)");     // naranja semitransparente
             svg.appendChild(poly);
             """
             ui.run_javascript(js)
 
+    def draw_points(self, figures):
+        """
+        Dibuja puntos pequeños en cada coordenada clickeada.
+        Se pintan tanto los puntos de figuras confirmadas como los de la figura en edición.
+        """
+        if not figures:
+            return
+
+        js = """
+        const svg = document.getElementById("overlay");
+        // Limpia puntos previos antes de redibujar
+        const old_points = svg.querySelectorAll('.click-point');
+        old_points.forEach(p => svg.removeChild(p));
+        """
+
+        ui.run_javascript(js)
+
+        for figure in figures:
+            for (x, y) in figure:
+                if self.mode == "bbox":
+                    # En modo bbox, solo dibuja los puntos inicial y final
+                    if (x, y) != figure[0] and (x, y) != figure[-1]:
+                        continue
+                js_point = f"""
+                const svg = document.getElementById("overlay");
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("class", "click-point");
+                circle.setAttribute("cx", {x});
+                circle.setAttribute("cy", {y});
+                circle.setAttribute("r", 3);
+                circle.setAttribute("fill", "blue");
+                svg.appendChild(circle);
+                """
+                ui.run_javascript(js_point)
+
+    
 
     def draw(self, points):
         """
         Decide qué tipo de figura dibujar (bounding box o polígono)
         dependiendo del modo actual.
         """
+        self.draw_points(points)  # dibuja los puntos clickeados
         if self.mode == "bbox":
             self.draw_bbox(points)
         elif self.mode == "polygon":
@@ -214,7 +269,7 @@ if __name__ in {"__main__", "__mp_main__"}:
     gp = GetPoint()
 
     # Creamos un ShapeDrawer con una imagen de prueba
-    drawer = ShapeDrawer("https://picsum.photos/600/400", 640, 480, gp)
+    drawer = LabelDrawer("https://picsum.photos/600/400", 640, 480, gp)
 
     # Timer que actualiza el dibujo en tiempo real cada 0.3 segundos
     # Dibuja siempre en base a los puntos almacenados en gp

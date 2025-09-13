@@ -1,3 +1,10 @@
+# -----------------------
+# Clase para obtener puntos de clics del mouse
+# la lista de puntos se guarda en self.figures
+# cada figura es una lista de puntos
+# esta lista de figuras se pasa a ShapeDrawer para dibujar
+# -----------------------
+
 class GetPoint:
     def __init__(self):
         self.figures = [[]]  # lista de figuras, cada figura es una lista de puntos
