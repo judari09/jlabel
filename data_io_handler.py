@@ -22,7 +22,7 @@ class ObboxList(UserList):
         super().append(item)
 
 
-class data_io_handler:
+class DataIOHandler:
     def __init__(self, save_directory: str = None, file_format: str = 'txt', encoding: str = 'utf-8', format_label: str = 'yolo'):
         self.image_loader = ImageLoader()
         self.label_loader = Labelloader()

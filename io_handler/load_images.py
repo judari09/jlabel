@@ -1,5 +1,6 @@
 import os
 
+from nicegui import app
 class ImageLoader:
     def __init__(self):
         self.images = []  # lista de rutas de imágenes
@@ -16,12 +17,15 @@ class ImageLoader:
         self.images.append(path)
 
     def load_images_from_folder(self, folder_path: str):
-        """Carga todas las imágenes desde una carpeta dada."""
+        """Carga todas las imágenes desde una carpeta dada y las expone a través de una URL estática."""
         if not os.path.isdir(folder_path):
             self.warnings.append(f"La ruta {folder_path} no es una carpeta válida.")
-            return
+            return []
 
-        # Filtrar solo imágenes válidas
+        # Servir carpeta si no está registrada
+        url_prefix = f'/{os.path.basename(folder_path)}'
+
+        # Filtrar imágenes
         image_files = [
             f for f in os.listdir(folder_path)
             if f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif'))
@@ -29,12 +33,13 @@ class ImageLoader:
 
         if not image_files:
             self.warnings.append(f"No se encontraron imágenes en la carpeta {folder_path}.")
-            return
+            return []
 
-        for filename in image_files:
-            path = os.path.join(folder_path, filename)
-            self.images.append(path)
+        # Construir rutas servibles (URLs)
+        self.images = [f'{url_prefix}/{filename}' for filename in image_files]
+        return self.images
 
+    
     def get_page(self, page: int, page_size: int = 50):
         """Devuelve una lista de rutas correspondiente a una página."""
         start = page * page_size
