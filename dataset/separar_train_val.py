@@ -1,6 +1,7 @@
 import os
 import shutil
 import random
+from urllib.parse import unquote
 
 class YoloDatasetSplitter:
     def __init__(self, source_dir: str, train_dir: str, val_dir: str, split_ratio: float = 0.8):
@@ -13,9 +14,10 @@ class YoloDatasetSplitter:
         - val_dir (str): carpeta donde se guardarán las imágenes/labels de validación.
         - split_ratio (float): proporción de datos para entrenamiento (por defecto 0.8).
         """
-        self.source_dir = source_dir
-        self.train_dir = train_dir
-        self.val_dir = val_dir
+        
+        self.source_dir = unquote(source_dir)
+        self.train_dir = unquote(train_dir)
+        self.val_dir = unquote(val_dir)
         self.split_ratio = split_ratio
 
         # Crear carpetas de destino si no existen

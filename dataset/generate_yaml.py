@@ -1,8 +1,16 @@
 import os
 import yaml  # PyYAML
+from urllib.parse import unquote
 
 class YoloDatasetConfig:
-    def __init__(self, root_path: str, train_dir: str, val_dir: str, test_dir: str = None, class_names: list = None):
+    def __init__(
+        self,
+        root_path: str,
+        train_dir: str,
+        val_dir: str,
+        test_dir: str = None,
+        class_names: list = None,
+    ):
         """
         Clase para generar archivos .yaml de configuración de datasets YOLO.
 
@@ -35,6 +43,9 @@ class YoloDatasetConfig:
 
     def save(self, output_path: str):
         """Guarda el archivo YAML en la ruta especificada."""
+        # Crear el directorio si no existe
+        output_path = unquote(output_path)
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
         data = self.to_dict()
         with open(output_path, "w", encoding="utf-8") as f:
             yaml.dump(data, f, allow_unicode=True, sort_keys=False)
@@ -49,6 +60,6 @@ if __name__ == "__main__":
         train_dir="train/images",
         val_dir="val/images",
         test_dir="test/images",
-        class_names=["persona", "bicicleta", "coche"]
+        class_names=["persona", "bicicleta", "coche"],
     )
     config.save("dataset_config.yaml")
