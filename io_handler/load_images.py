@@ -1,6 +1,7 @@
 import os
-
+from urllib.parse import unquote
 from nicegui import app
+
 class ImageLoader:
     def __init__(self):
         self.images = []  # lista de rutas de imágenes
@@ -8,6 +9,7 @@ class ImageLoader:
 
     def load_image(self, path: str):
         """Carga una sola imagen desde una ruta dada."""
+        path = unquote(path)  # Decodificar la ruta
         if not os.path.isfile(path):
             self.warnings.append(f"La ruta {path} no existe o no es un archivo.")
             return
@@ -18,6 +20,7 @@ class ImageLoader:
 
     def load_images_from_folder(self, folder_path: str):
         """Carga todas las imágenes desde una carpeta dada y las expone a través de una URL estática."""
+        folder_path = unquote(folder_path)  # Decodificar la ruta
         if not os.path.isdir(folder_path):
             self.warnings.append(f"La ruta {folder_path} no es una carpeta válida.")
             return []

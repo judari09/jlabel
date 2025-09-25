@@ -72,20 +72,20 @@ class LabelSaver:
                     for label in labels:# ahora label es BoundingBox
                         if not isinstance(label, BoundingBox):
                             raise TypeError("Se esperaba un objeto 'BoundingBox'")
-                        f.write(f"{label.class_id} {label.x_center} {label.y_center} {label.width} {label.height}\n")
+                        f.write(f"{label.class_index} {label.x} {label.y} {label.w} {label.h}\n")
                         
             elif type_label == 'segmentation':
                     for label in labels:  # ahora label es Segmentation
                         if not isinstance(label, Segmentation):
                             raise TypeError("Se esperaba un objeto 'Segmentation'")
                         points_str = ' '.join(f"{x} {y}" for x, y in label.points)
-                        f.write(f"{label.class_id} {points_str}\n")
+                        f.write(f"{label.class_index} {points_str}\n")
                         
             elif type_label == 'obbox':
                     for label in labels:  # ahora label es obbox
                         if not isinstance(label, obbox):
                             raise TypeError("Se esperaba un objeto 'obbox'")
                         points_str = ' '.join(f"{x} {y}" for x, y in label.points)
-                        f.write(f"{label.class_id} {points_str}\n")
+                        f.write(f"{label.class_index} {points_str}\n")
             else:
                 raise ValueError("type_label debe ser 'bbox' o 'segmentation'")

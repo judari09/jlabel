@@ -1,5 +1,5 @@
 import os 
-
+from urllib.parse import unquote
 class Labelloader:
     def __init__(self):
         self.labels = []  # lista de rutas de etiquetas
@@ -7,6 +7,7 @@ class Labelloader:
 
     def load_label(self, path: str):
         """Carga una sola etiqueta desde una ruta dada."""
+        path = unquote(path)  # Decodificar la ruta
         if not os.path.isfile(path):
             self.warnings.append(f"La ruta {path} no existe o no es un archivo.")
             return
@@ -17,6 +18,7 @@ class Labelloader:
 
     def load_labels_from_folder(self, folder_path: str):
         """Carga todas las etiquetas desde una carpeta dada."""
+        folder_path = unquote(folder_path)  # Decodificar la ruta
         if not os.path.isdir(folder_path):
             self.warnings.append(f"La ruta {folder_path} no es una carpeta válida.")
             return
